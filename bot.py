@@ -149,12 +149,12 @@ def main():
         # Wait to ensure messages are sent
         time.sleep(5)
 
-        # Stop the bot gracefully
-        updater.stop()
-        updater.is_idle = False
+        # Stop the bot gracefully using bot_instance
+        bot_instance.stop()
 
     except Exception as e:
         logger.error(f"Error initializing bot: {str(e)}")
+        bot_instance.stop()  # Ensure cleanup on error
         raise
 
 if __name__ == '__main__':
