@@ -1,7 +1,6 @@
 import os
 import requests
 from bs4 import BeautifulSoup
-import pandas as pd
 from telegram import Bot, Update
 from telegram.ext import Updater, CommandHandler, CallbackContext
 import json
