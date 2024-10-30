@@ -1,17 +1,39 @@
 import os
 import requests
 from bs4 import BeautifulSoup
+import pandas as pd
 from telegram import Bot, Update
 from telegram.ext import Updater, CommandHandler, CallbackContext
 import json
 import time
 import telegram
 import logging
+import atexit
 
 # Set up logging
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                    level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+class BotInstance:
+    def __init__(self):
+        self.updater = None
+        self.bot = None
+        
+    def stop(self):
+        if self.updater:
+            self.updater.stop()
+            self.updater.is_idle = False
+            self.updater.dispatcher.stop()
+            self.updater.job_queue.stop()
+            logger.info("Bot stopped gracefully")
+
+bot_instance = BotInstance()
+
+def cleanup():
+    bot_instance.stop()
+
+atexit.register(cleanup)
 
 def get_bot_token():
     """Get bot token from environment variable"""
@@ -54,20 +76,22 @@ def send_message_to_subscribers(message):
 
 def main():
     try:
-        # Initialize bot with token from environment variable
-        token = get_bot_token()
-        bot = telegram.Bot(token=token)
-        updater = Updater(token=token, use_context=True)
+        token = os.getenv('TELEGRAM_TOKEN')
+        if not token:
+            raise ValueError("No token found!")
+            
+        bot_instance.updater = Updater(token=token, use_context=True)
+        bot_instance.bot = bot_instance.updater.bot
         
         # Set up the Updater and Dispatcher
-        dispatcher = updater.dispatcher
+        dispatcher = bot_instance.updater.dispatcher
 
         # Add the /start command handler
         start_handler = CommandHandler('start', start)
         dispatcher.add_handler(start_handler)
 
         # Start the bot
-        updater.start_polling()
+        bot_instance.updater.start_polling()
 
         # Your existing scraping code
         main_url = 'https://mostaql.com/projects'
@@ -121,11 +145,14 @@ def main():
         time.sleep(5)
 
         # Stop the bot gracefully
-        updater.stop()
-        updater.is_idle = False
-
+        bot_instance.updater.idle()
+        
+    except telegram.error.Conflict:
+        logger.error("Another bot instance is running. Shutting down.")
+        cleanup()
     except Exception as e:
-        logger.error(f"Error initializing bot: {str(e)}")
+        logger.error(f"Error: {str(e)}")
+        cleanup()
         raise
 
 if __name__ == '__main__':
