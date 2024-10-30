@@ -150,14 +150,11 @@ def main():
         time.sleep(5)
 
         # Stop the bot gracefully
-        bot_instance.updater.idle()
-        
-    except telegram.error.Conflict:
-        logger.error("Another bot instance is running. Shutting down.")
-        cleanup()
+        updater.stop()
+        updater.is_idle = False
+
     except Exception as e:
-        logger.error(f"Error: {str(e)}")
-        cleanup()
+        logger.error(f"Error initializing bot: {str(e)}")
         raise
 
 if __name__ == '__main__':
