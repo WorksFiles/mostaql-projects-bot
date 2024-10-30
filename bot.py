@@ -71,8 +71,13 @@ def start(update: Update, context: CallbackContext):
 
 # Function to send message to all subscribers
 def send_message_to_subscribers(message):
-    for chat_id in subscribers:
-        Bot.send_message(chat_id=chat_id, text=message)
+    """Send message to all subscribers using bot instance"""
+    try:
+        for chat_id in subscribers:
+            bot_instance.bot.send_message(chat_id=chat_id, text=message)
+            time.sleep(0.1)  # Add small delay between messages
+    except Exception as e:
+        logger.error(f"Failed to send message: {str(e)}")
 
 def main():
     try:
