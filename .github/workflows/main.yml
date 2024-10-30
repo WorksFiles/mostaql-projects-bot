@@ -2,8 +2,8 @@ name: Mostaql Projects Bot
 
 on:
   schedule:
-    - cron: '*/14 * * * *'  # Runs every 14 minutes
-  workflow_dispatch:  # Allows manual triggering
+    - cron: '*/14 * * * *'
+  workflow_dispatch:
 
 jobs:
   run-bot:
@@ -16,8 +16,12 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
-        python-version: '3.10'
+        python-version: '3.9'
 
+    - name: Create subscribers file
+      run: |
+        echo "[]" > subscribers.json
+        
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
@@ -29,11 +33,12 @@ jobs:
       run: |
         python bot.py
 
-    - name: Save subscriber data
-      if: always()
+    - name: Configure Git
       run: |
         git config --global user.name 'GitHub Actions Bot'
         git config --global user.email 'actions@github.com'
+        
+    - name: Commit and push if changed
+      run: |
         git add subscribers.json
-        git commit -m "Update subscribers data" || echo "No changes to commit"
-        git push || echo "No changes to push"
+        git diff --staged --quiet || (git commit -m "Update subscribers data" && git push)
