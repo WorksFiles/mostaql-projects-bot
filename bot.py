@@ -1,6 +1,7 @@
 import os
 import requests
 from bs4 import BeautifulSoup
+import pandas as pd
 from telegram import Bot, Update
 from telegram.ext import Updater, CommandHandler, CallbackContext
 import json
@@ -46,6 +47,9 @@ SUBSCRIBERS_FILE = 'subscribers.json'
 
 # Load existing subscribers from file
 def load_subscribers():
+    if not os.path.exists(SUBSCRIBERS_FILE):
+        with open(SUBSCRIBERS_FILE, 'w') as f:
+            json.dump([], f)
     try:
         with open(SUBSCRIBERS_FILE, 'r') as f:
             return json.load(f)
@@ -56,6 +60,7 @@ def load_subscribers():
 def save_subscribers():
     with open(SUBSCRIBERS_FILE, 'w') as f:
         json.dump(subscribers, f)
+    logger.info("Subscribers saved to file")
 
 # Load existing subscribers when starting
 subscribers = load_subscribers()
@@ -67,6 +72,8 @@ def start(update: Update, context: CallbackContext):
         subscribers.append(chat_id)
         save_subscribers()  # Save whenever new subscriber is added
         update.message.reply_text('You have been subscribed to project updates!')
+    else:
+        update.message.reply_text('You are already subscribed to project updates!')
 
 # Function to send message to all subscribers
 def send_message_to_subscribers(message):
